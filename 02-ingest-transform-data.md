@@ -501,3 +501,7 @@ df_windowed = (df_stream
 | SCD Type 2 on customer dimension | History tracking | **Delta MERGE with valid_from/valid_to** |
 | Aggregate real-time sensor data | Time-series analytics | **KQL in Eventhouse** |
 | Speed up queries on shortcut data in RTI | Performance | **Query acceleration** |
+
+---
+
+[← 01 — Implement & Manage an Analytics Solution](/dp-700-study-notes/01-implement-manage-analytics-solution/) | [03 — Monitor & Optimize an Analytics Solution →](/dp-700-study-notes/03-monitor-optimize-analytics-solution/)

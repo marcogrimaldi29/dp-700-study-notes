@@ -442,3 +442,7 @@ count2 = df_intermediate.filter(col("region") == "EU").count()
 | General Spark read performance | Read speed | **V-Order (default) + OPTIMIZE** |
 | Pre-aggregate KQL query results | Repeated aggregation | **Materialized views** |
 | Warehouse query scans too much data | I/O reduction | **Partition elimination, avoid SELECT \*** |
+
+---
+
+[← 02 — Ingest & Transform Data](/dp-700-study-notes/02-ingest-transform-data/) | [04 — Quick Reference Cheatsheet →](/dp-700-study-notes/04-quick-reference-cheatsheet/)

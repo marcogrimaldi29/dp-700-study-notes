@@ -252,3 +252,7 @@ flowchart LR
 | Orchestrate multi-step data pipelines | Workflow engine | **Data Pipeline** |
 | Complex PySpark transformations | Code-first ETL | **Notebook** |
 | Build BI reports on Lakehouse data | Business intelligence | **Semantic Model + Power BI** |
+
+---
+
+[← Back to Home](/dp-700-study-notes/) | [01 — Implement & Manage an Analytics Solution →](/dp-700-study-notes/01-implement-manage-analytics-solution/)

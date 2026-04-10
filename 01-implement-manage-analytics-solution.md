@@ -469,3 +469,7 @@ flowchart TD
 | Mark a dataset as trusted and organization-approved | Data quality signal | **Certified endorsement** |
 | Control Spark cluster size for a workspace | Compute management | **Custom pool in Spark settings** |
 | Schema-as-code for Warehouse | Version-controlled schema | **Database Projects** |
+
+---
+
+[← 00 — Fabric Prerequisites](/dp-700-study-notes/00-fabric-prerequisites/) | [02 — Ingest & Transform Data →](/dp-700-study-notes/02-ingest-transform-data/)

@@ -30,7 +30,7 @@ mermaid: true
 |--------|-------|
 | 🏅 Certification | **Microsoft Certified: Fabric Data Engineer Associate** |
 | 📝 Passing Score | **700 / 1000** |
-| 💶 Price | **~$165 USD / ~€155 EUR** *(varies by country, VAT may apply)* |
+| 💶 Price | ***~€126 EUR** *(varies by country, VAT may apply)* |
 | ⏱️ Duration | **100 minutes** *(120 min seat time incl. check-in)* |
 | ❓ Question Types | MCQ, multi-select, drag-and-drop, case studies |
 | 🔁 Renewal | **Annual** — free online assessment on Microsoft Learn |
@@ -43,8 +43,8 @@ mermaid: true
 
 ```mermaid
 pie title DP-700 — Official Exam Domain Weights
-    " Implement & Manage an Analytics Solution (30–35%)" : 32
-    " Ingest & Transform Data (30–35%)" : 34
+    " Implement & Manage an Analytics Solution (30–35%)" : 33
+    " Ingest & Transform Data (30–35%)" : 33
     " Monitor & Optimize an Analytics Solution (30–35%)" : 34
 ```
 
