@@ -233,3 +233,7 @@ graph TD
 | Spark join slow, small + large table | Join optimization | **Broadcast join** |
 | Too many small output files | Write optimization | **coalesce() before write** |
 | Slow KQL on historical data | Cache miss | **Extend caching policy / query acceleration** |
+
+---
+
+[← 03 — Monitor & Optimize an Analytics Solution](/dp-700-study-notes/03-monitor-optimize-analytics-solution/) | [Back to Home →](/dp-700-study-notes/)
