@@ -138,6 +138,8 @@ Maintained by **[Marco Grimaldi](https://www.linkedin.com/in/marco-grimaldi29/)*
 
 The site is continuously updated and based on my personal study notes and experiences. If you have any feedback, suggestions, or corrections, feel free to [reach out](https://marcogrimaldi29.com/contact/)!
 
+> ⭐ If these notes helped you on your DP-700 journey, consider giving the repo a **star** — it helps others discover these resources and motivates continued updates!
+
 ---
 
 ## 📈 Analytics
