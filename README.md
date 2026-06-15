@@ -3,7 +3,7 @@
 
 [![Deploy to GitHub Pages](https://github.com/marcogrimaldi29/dp-700-study-notes/actions/workflows/pages.yml/badge.svg)](https://github.com/marcogrimaldi29/dp-700-study-notes/actions/workflows/pages.yml)
 [![GitHub](https://img.shields.io/badge/GitHub%20Pages-Live-brightgreen?logo=github)](https://github.com/marcogrimaldi29/dp-700-study-notes)
-[![Personal Hub of Marco Grimaldi](https://img.shields.io/badge/Blog-marcogrimaldi29.com-blue?logo=rss)](https://marcogrimaldi29.com)
+[![marcogrimaldi29.com](https://img.shields.io/badge/Blog-marcogrimaldi29.com-blue?logo=rss)](https://marcogrimaldi29.com)
 
 > - 🎯 **Goal:** Earn the Microsoft Certified: Fabric Data Engineer Associate badge
 > - 📅 **Notes Version:** 2026
@@ -124,17 +124,13 @@ The site includes full-text search, Mermaid diagram rendering, and mobile-friend
 
 These notes are designed to be a structured, exam-focused summary of the most important concepts and services based on the official [Microsoft DP-700 Study Guide](https://learn.microsoft.com/en-us/credentials/certifications/resources/study-guides/dp-700) and its criteria.
 
-Additional resources and study notes maintained by me, such as the **[📘 AZ-305 Study Notes](https://marcogrimaldi29.com/az-305-study-notes/)** and more, are also available for those pursuing the Microsoft and Azure certifications at the following Landing Page:
-
-👉 **[🧑‍🏫 Microsoft Study Notes: Central Hub](https://marcogrimaldi29.com/microsoft-study-notes/)**
-
 ---
 
 ## ✍️ About the Author
 
 Maintained by **[Marco Grimaldi](https://www.linkedin.com/in/marco-grimaldi29/)** — Cloud Consultant, Language Trainer & Lifelong Learner.
 
-🏠 Find more certification guides, study tips, and tech content at **[🌐 marcogrimaldi29.com](https://marcogrimaldi29.com)**
+Find more certification guides, study tips, and tech content at **[🏠 marcogrimaldi29.com](https://marcogrimaldi29.com)**
 
 The site is continuously updated and based on my personal study notes and experiences. If you have any feedback, suggestions, or corrections, feel free to [reach out](https://marcogrimaldi29.com/contact/)!
 
