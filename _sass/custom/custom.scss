@@ -108,6 +108,10 @@ body .support-actions svg       { flex: none; }
 body .support-actions a.support-star       { background: #1e2d2e; border-color: #2f4546; color: #e2e8f0; }
 body .support-actions a.support-star:hover { border-color: #4dd0e1; color: #e2e8f0; }
 
+// LinkedIn's own blue in both themes, lightening on hover.
+body .support-actions a.support-linkedin       { background: #0a66c2; border-color: #0a66c2; color: #ffffff; }
+body .support-actions a.support-linkedin:hover { background: #1275d1; border-color: #1275d1; color: #ffffff; }
+
 // Buy Me a Coffee's own brand colours, so the button reads as theirs; on
 // hover the contour turns their near-black, doubled by an inset ring so it
 // still shows against the dark callout.
