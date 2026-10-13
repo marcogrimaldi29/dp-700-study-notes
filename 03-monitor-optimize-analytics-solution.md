@@ -22,6 +22,7 @@ mindmap
       Data Ingestion Monitoring
       Data Transformation Monitoring
       Semantic Model Refresh
+      Workspace Monitoring
       Alerts
     3.2 Identify & Resolve Errors
       Pipeline Errors
@@ -56,15 +57,32 @@ graph TD
     HUB --> SPARK["⚡ Spark Sessions"]
     HUB --> REFRESH["🔄 Semantic Model Refreshes"]
     HUB --> COPY["📋 Copy Jobs"]
+    HUB --> MLV["🧱 Materialized Lake View Runs"]
 ```
 
 | Feature | Description |
 |---------|-------------|
-| **View** | All activities across the workspace |
-| **Filter** | By item type, status, time range, submitter |
+| **View** | All activities you have access to, across workspaces |
+| **Filter** | By item type, status, time range, submitter, location (workspace) |
 | **Status** | Running, Succeeded, Failed, Cancelled |
-| **Details** | Drill into individual run details, stages, errors |
+| **Details** | Drill into individual run details, stages, errors; cancel in-progress runs |
 | **Historical** | View past 30 days of activity |
+
+---
+
+### Monitoring Tools Beyond the Hub
+
+| Tool | What it gives you | Retention |
+|------|-------------------|-----------|
+| **Workspace monitoring** *(preview)* | Logs & metrics from supported items (e.g., `ItemJobEventLogs`, Eventhouse, semantic models, warehouse, mirrored DBs) streamed into a read-only **Eventhouse KQL database** you query with KQL, dashboards, or alerts | **30 days** by default (editable retention/caching policies) |
+| **Fabric Capacity Metrics app** | CU consumption per item/operation, smoothing, throttling, storage | **14 days** |
+| **Query Insights** (Warehouse / SQL endpoint) | `queryinsights.*` views of historical queries | 30 days |
+| **Mirrored database monitoring** | Replication status, rows replicated, errors, latency | — |
+| **OneLake diagnostics** | Data-access activity on OneLake for a workspace | — |
+
+> **Exam Caveat ⚠️:**
+> - Workspace monitoring is enabled by a **workspace admin** (tenant setting "Workspace admins can turn on monitoring for their workspaces" required); it **doesn't backfill** earlier activity and consumes capacity
+> - Need cross-run trends, KQL, or alerts on failures across many items? → **workspace monitoring**. Need one run's details? → **Monitoring hub**
 
 ---
 
@@ -73,8 +91,9 @@ graph TD
 | What to Monitor | Where | Key Metrics |
 |----------------|-------|-------------|
 | **Pipeline Copy Activity** | Monitoring Hub → Pipeline runs | Rows read, rows written, duration, throughput (MB/s) |
-| **Dataflow Gen2** | Monitoring Hub → Dataflow runs | Rows processed, duration, refresh status |
-| **Mirroring** | Mirrored database item | Replication lag, row counts, sync status |
+| **Dataflow Gen2** | Monitoring Hub → Dataflow runs / refresh history | Rows processed, duration, refresh status, engine used (e.g., Fast Copy = CopyActivity) |
+| **Copy job** | Copy job monitoring pane / Monitoring Hub | Rows read/written, duration, incremental state |
+| **Mirroring** | Mirrored database item → Monitor replication | Replication status, rows replicated, errors |
 | **Eventstream** | Eventstream monitoring tab | Events in/out, backlog, errors |
 
 > **Exam Caveat ⚠️:** For **Pipeline Copy Activity**, check both **rows read** and **rows written** — a mismatch indicates data loss or filtering during copy.
@@ -117,9 +136,11 @@ graph TD
 
 | Alert Type | Description | Configuration |
 |-----------|-------------|---------------|
-| **Data activator** | Alert on data conditions (e.g., value exceeds threshold) | Reflex items |
-| **Pipeline failure** | Notify on pipeline run failure | Pipeline settings → notifications |
-| **Capacity alerts** | Alert when CU consumption is high | Admin portal → capacity settings |
+| **Activator** | Alert or act on data conditions (e.g., value exceeds threshold) in Eventstreams, KQL querysets, Real-Time Dashboards, Power BI visuals | Activator item (shows as **Reflex**) — actions: email, Teams, run a Fabric item, Power Automate |
+| **Fabric job / workspace events** | React when any item run fails or succeeds | Real-Time hub → Fabric events → set alert (Activator) |
+| **Pipeline failure** | Notify on scheduled pipeline run failure | Schedule → **Failure notifications**, or Office 365 Outlook / Teams activities on the failure path |
+| **Workspace monitoring alerts** | Alert from a saved KQL query over monitoring data | Monitoring item's Activator |
+| **Capacity alerts** | Notify when CU consumption crosses a threshold | Admin portal → capacity settings → notifications |
 
 ---
 
@@ -155,12 +176,14 @@ flowchart TD
 | Error | Cause | Resolution |
 |-------|-------|------------|
 | **Refresh failed: data source error** | Source unavailable or credentials expired | Check source connectivity, refresh credentials |
-| **Evaluation timeout** | Transform too complex or data too large | Simplify steps, enable staging, reduce data |
-| **Destination error** | Cannot write to target Lakehouse/Warehouse | Check destination exists, permissions, schema |
-| **Memory exceeded** | Dataflow ran out of memory | Enable staging Lakehouse, reduce data volume |
+| **Evaluation timeout** | Transform too complex or data too large | Simplify steps, keep steps foldable, enable staging, reduce data |
+| **Destination error** | Cannot write to target Lakehouse/Warehouse | Check destination exists, permissions, schema mapping |
+| **Memory exceeded** | Dataflow ran out of memory | Stage the query, split heavy steps into referenced queries, reduce data volume |
+| **"Require Fast Copy" failure** | Query marked *Require fast copy* but source/transforms aren't Fast Copy–compatible | Remove incompatible steps (stage first) or clear *Require fast copy* |
+| **Gateway error** | On-premises data gateway offline or outdated | Restart/update the gateway, check the connection |
 | **Duplicate column names** | Column name collision after join/merge | Rename columns before merge |
 
-> **Exam Caveat ⚠️:** When Dataflow Gen2 runs out of memory, the **fix is to enable staging** (workspace-level staging Lakehouse) — this offloads heavy transformations to Spark.
+> **Exam Caveat ⚠️:** For heavy or memory-bound Dataflow Gen2 work, **stage** the data (staging is enabled **per query**, landing in the auto-created staging Lakehouse/Warehouse) and transform from the staged query — an ELT pattern. Fast Copy, the Modern Evaluator, and partitioned compute are the other levers.
 
 ---
 
@@ -234,8 +257,8 @@ flowchart TD
     Q2 -->|Yes| VACUUM["🧹 VACUUM\n(Remove old files)"]
     Q2 -->|No| Q3{Slow filtered\nqueries?}
     Q3 -->|Yes| ZORDER["📊 Z-ORDER BY\n(Co-locate related data)"]
-    Q3 -->|No| Q4{General read\nperformance?}
-    Q4 -->|Yes| VORDER["⚡ V-Order\n(Columnar optimization)"]
+    Q3 -->|No| Q4{Read by Power BI\nDirect Lake / SQL?}
+    Q4 -->|Yes| VORDER["⚡ V-Order\n(readHeavyForPBI profile\nor OPTIMIZE ... VORDER)"]
 ```
 
 **Key optimization commands:**
@@ -244,8 +267,21 @@ flowchart TD
 |---------|---------|--------|
 | **OPTIMIZE** | Compact small files into larger ones | `OPTIMIZE table_name` |
 | **OPTIMIZE + Z-ORDER** | Compact + co-locate data by columns | `OPTIMIZE table_name ZORDER BY (col1, col2)` |
+| **OPTIMIZE + V-Order** | Compact and rewrite with V-Order | `OPTIMIZE table_name VORDER` (combinable with `ZORDER BY`) |
 | **VACUUM** | Remove old files beyond retention | `VACUUM table_name RETAIN 168 HOURS` |
-| **V-Order** | Fabric-specific columnar write optimization | Enabled by default; `spark.conf.set("spark.sql.parquet.vorder.enabled", "true")` |
+| **V-Order (session)** | Write new files with V-Order | **Off by default in new workspaces**; `spark.conf.set("spark.sql.parquet.vorder.default", "true")` |
+| **V-Order (table)** | Default V-Order for one table | `ALTER TABLE t SET TBLPROPERTIES ("delta.parquet.vorder.enabled" = "true")` |
+| **Resource profile** | Apply a tuned config set | `spark.conf.set("spark.fabric.resourceProfile", "readHeavyForPBI")` |
+
+You can also run OPTIMIZE / V-Order / VACUUM without code from the Lakehouse **Table maintenance** option, or the pipeline **Lakehouse maintenance** activity.
+
+**Write-time layout options:**
+
+| Option | What it does | When |
+|--------|-------------|------|
+| **Optimize Write** | Bin-packs data before writing → fewer, larger files (adds a shuffle) | Partitioned tables, many small writes |
+| **Auto compaction** | Compacts small files after writes | Frequent small ingestion batches |
+| **Adaptive target file size** | Auto-picks the ideal file size per table | Most workloads (recommended, not default) |
 
 ```sql
 -- Optimize a Delta table (SQL syntax)
@@ -262,8 +298,10 @@ VACUUM lakehouse1.gold_sales RETAIN 72 HOURS;
 ```
 
 > **Exam Caveat ⚠️:**
-> - **V-Order** is enabled by default in Fabric and applies at write time — it reorders data within Parquet row groups for faster reads
+> - **V-Order** is **disabled by default in new workspaces** (`writeHeavy` profile). It's a write-time Parquet layout optimization: big gains for **Power BI Direct Lake** (~40–60% on cold cache), ~10% for SQL, **no inherent benefit for Spark reads** and slower writes
 > - **Z-ORDER** is complementary to V-Order — it co-locates data across files based on specified columns (best for frequently filtered columns)
+> - In Runtime 1.3+, the old `spark.sql.parquet.vorder.enabled` setting is **removed** — use `spark.sql.parquet.vorder.default`
+> - OPTIMIZE and VACUUM are **Spark** commands — not supported from the SQL analytics endpoint or Warehouse editor
 > - **VACUUM** does NOT compact files — use **OPTIMIZE** for that. VACUUM only deletes old, unreferenced files
 > - Running VACUUM with retention < 7 days can break **time travel** queries
 
@@ -274,11 +312,12 @@ VACUUM lakehouse1.gold_sales RETAIN 72 HOURS;
 | Optimization | Description |
 |-------------|-------------|
 | **Parallelism** | Use ForEach with parallel batches for independent operations |
-| **Copy activity tuning** | Increase DIU (Data Integration Units), adjust parallelism |
+| **Copy activity tuning** | Adjust **intelligent throughput optimization** (Fabric's equivalent of ADF DIUs) and degree of copy parallelism; use partitioned reads for large source tables |
 | **Staging** | Enable staging for large cross-region copies |
 | **Selective columns** | Only copy needed columns, not entire tables |
-| **Incremental copy** | Use watermark/CDC instead of full copy each run |
+| **Incremental copy** | Use watermark/CDC (or a Copy job) instead of full copy each run |
 | **Pipeline structure** | Minimize sequential dependencies; parallelize where possible |
+| **Right tool** | Move pure data movement into a **Copy job**; push heavy transforms to Spark or the Warehouse rather than chaining many Dataflow steps |
 
 ---
 
@@ -286,12 +325,15 @@ VACUUM lakehouse1.gold_sales RETAIN 72 HOURS;
 
 | Optimization | Description |
 |-------------|-------------|
-| **Statistics** | Ensure up-to-date statistics for query optimizer (auto-created) |
-| **CTAS pattern** | Use CREATE TABLE AS SELECT for large transforms (avoids logging overhead) |
-| **Partition elimination** | Design queries to leverage date/region partitions |
+| **Statistics** | Auto-created and auto-updated for the query optimizer; can also be created manually (single-column) |
+| **CTAS / INSERT…SELECT** | Set-based loads instead of row-by-row or singleton inserts (avoid many small transactions → small files) |
+| **Data clustering** *(preview)* | Co-locate rows on frequently filtered columns at table creation → better file/rowgroup skipping |
+| **Data types** | Use the smallest appropriate types (e.g., `varchar(n)` not `varchar(max)`) |
 | **Avoid SELECT \*** | Select only needed columns — reduces I/O |
-| **Result set caching** | Enabled by default for repeated identical queries |
-| **Materialized views** | Pre-compute expensive aggregations (where supported) |
+| **Result set caching** | **On by default** for Warehouses and SQL endpoints; disable per item (`ALTER DATABASE … SET RESULT_SET_CACHING OFF`) or per query (`OPTION (USE HINT ('DISABLE_RESULT_SET_CACHE'))`) |
+| **Cold cache awareness** | First run after idle may read from OneLake (`data_scanned_remote_storage_mb` in Query Insights) — benchmark warm runs |
+
+> **Exam Caveat ⚠️:** Fabric Warehouse does **not** support **materialized views**, user-defined **indexes**, or table **partitioning** — use data clustering, statistics, and result-set caching instead. (Materialized views *do* exist in **Eventhouse/KQL** — see below.)
 
 **Key DMVs for Warehouse monitoring:**
 
@@ -320,7 +362,7 @@ ORDER BY total_elapsed_time_ms DESC;
 
 ---
 
-### Optimize Eventstreams and Eventhouses
+### Optimize Eventstream and Eventhouse
 
 **Eventstream optimization:**
 
@@ -431,17 +473,21 @@ count2 = df_intermediate.filter(col("region") == "EU").count()
 | Many small Parquet files in Lakehouse | File compaction | **OPTIMIZE** |
 | Old Delta file versions consuming storage | Storage cleanup | **VACUUM** |
 | Slow filtered queries on specific columns | Query performance | **Z-ORDER BY** on those columns |
-| Pipeline copy activity is slow | Throughput | **Increase DIU, enable parallelism** |
-| Dataflow Gen2 runs out of memory | Memory issue | **Enable staging Lakehouse** |
+| Pipeline copy activity is slow | Throughput | **Raise intelligent throughput optimization / parallelism, partitioned reads** |
+| Dataflow Gen2 runs out of memory | Memory issue | **Stage the query, then transform from staging** |
+| Dataflow Gen2 bulk load with no transforms is slow | Data movement | **Fast Copy** |
 | Notebook OOM error on large join | Spark memory | **Broadcast small table, increase executor memory** |
 | Find long-running Warehouse queries | Diagnostics | **queryinsights.long_running_queries** |
 | KQL queries slow on old data | Hot cache miss | **Extend caching policy** |
 | Spark job has data skew | Uneven partitions | **Salt keys, enable AQE** |
 | Eventstream backlog growing | Processing lag | **Scale processing, simplify transforms** |
 | Reduce output file count from Spark | Write optimization | **coalesce() before write** |
-| General Spark read performance | Read speed | **V-Order (default) + OPTIMIZE** |
-| Pre-aggregate KQL query results | Repeated aggregation | **Materialized views** |
-| Warehouse query scans too much data | I/O reduction | **Partition elimination, avoid SELECT \*** |
+| Slow Power BI Direct Lake reports on new Delta tables | Read speed | **Enable V-Order (`readHeavyForPBI`) + OPTIMIZE** |
+| Fast ingestion matters more than read speed | Write speed | **`writeHeavy` profile (default, V-Order off)** |
+| Pre-aggregate KQL query results | Repeated aggregation | **Materialized views (Eventhouse)** |
+| Warehouse query scans too much data | I/O reduction | **Data clustering on filter columns, avoid SELECT \*** |
+| Find which item is burning capacity | CU analysis | **Fabric Capacity Metrics app** |
+| KQL-queryable run history and failure alerts for all items in a workspace | Observability | **Workspace monitoring** |
 
 ---
 

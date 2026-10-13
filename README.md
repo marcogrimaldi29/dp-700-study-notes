@@ -5,8 +5,9 @@
 [![marcogrimaldi29.com](https://img.shields.io/badge/Blog-marcogrimaldi29.com-blue?logo=rss)](https://marcogrimaldi29.com)
 
 > - 🎯 **Goal:** Earn the Microsoft Certified: Fabric Data Engineer Associate badge
-> - 📅 **Notes Version:** 2026
+> - 📅 **Notes Version:** 2026 — refreshed October 2026 (skills measured as of Oct 19, 2026)
 > - 🌐 **Published site:** [📘 DP-700 Study Notes](https://marcogrimaldi29.com/dp-700-study-notes/)
+> - 🆕 **New version:** [DP-700 Study Notes v2](https://marcogrimaldi29.com/dp-700-study-notes-v2/)
 > - ✍️ **Author:** [Marco Grimaldi](https://www.linkedin.com/in/marco-grimaldi29/)
 > - 🔗 **Related repos:** [📘 AZ-305 Study Notes](https://marcogrimaldi29.com/az-305-study-notes/)
 ---
@@ -27,7 +28,7 @@
 
 ## 📊 Official Domain Breakdown
 
-> ⚠️ **Official ranges** from the Microsoft study guide (updated April 2026)
+> ⚠️ **Official ranges** from the Microsoft study guide (skills measured as of October 19, 2026)
 
 ```mermaid
 pie title Exam Domain Weights of the DP-700 (official ranges)
@@ -81,7 +82,7 @@ dp-700-study-notes/
 | 📚 Microsoft's DP-700 Certification Learning Paths | [Certification Learning Paths](https://learn.microsoft.com/en-us/credentials/certifications/fabric-data-engineer-associate/) |
 | 📄 Official Exam Page | [DP-700 Exam](https://learn.microsoft.com/en-us/credentials/certifications/exams/dp-700/) |
 | 📋 Skills Measured / Study Guide | [Official Study Guide](https://learn.microsoft.com/en-us/credentials/certifications/resources/study-guides/dp-700) |
-| 🧪 Free Practice Assessment | [Practice Assessment](https://learn.microsoft.com/en-us/credentials/certifications/exams/dp-700/practice/assessment?assessment-type=practice&assessmentId=90) |
+| 🧪 Free Practice Assessment | [Practice Assessment](https://learn.microsoft.com/en-us/credentials/certifications/fabric-data-engineer-associate/practice/assessment?assessment-type=practice&assessmentId=1704375541&practice-assessment-type=certification) |
 | 🎬 Exam Readiness Videos | [Exam Readiness Zone](https://learn.microsoft.com/en-us/shows/exam-readiness-zone/) |
 | 📚 Microsoft Fabric Documentation | [Fabric Docs](https://learn.microsoft.com/en-us/fabric/) |
 | 🎓 Instructor-Led Course | [DP-700T00-A (4 days)](https://learn.microsoft.com/en-us/training/courses/dp-700t00) |
@@ -106,10 +107,21 @@ dp-700-study-notes/
 | File | Topics Covered |
 |------|---------------|
 | [📘 00 — Fabric Prerequisites](./00-fabric-prerequisites.md) | OneLake, workspaces, lakehouses, warehouses, capacities, Delta Lake |
-| [⚙️ 01 — Implement & Manage](./01-implement-manage-analytics-solution.md) | Workspace settings, deployment pipelines, security, governance, orchestration |
-| [🔄 02 — Ingest & Transform](./02-ingest-transform-data.md) | Loading patterns, batch/streaming ingestion, PySpark, SQL, KQL, shortcuts |
-| [📈 03 — Monitor & Optimize](./03-monitor-optimize-analytics-solution.md) | Monitoring, error resolution, Spark tuning, query optimization |
+| [⚙️ 01 — Implement & Manage](./01-implement-manage-analytics-solution.md) | Spark / OneLake / Apache Airflow settings, deployment pipelines, variable libraries, OneLake security, orchestration |
+| [🔄 02 — Ingest & Transform](./02-ingest-transform-data.md) | Loading patterns, Copy job, mirroring, shortcuts, PySpark, SQL, KQL, materialized lake views, Eventstream |
+| [📈 03 — Monitor & Optimize](./03-monitor-optimize-analytics-solution.md) | Monitoring hub & workspace monitoring, error resolution, V-Order / resource profiles, Spark & warehouse tuning |
 | [⚡ 04 — Quick Reference Cheatsheet](./04-quick-reference-cheatsheet.md) | Key numbers, decision tables, exam traps, final checklist |
+
+---
+
+## 📝 Changelog
+
+**October 2026 refresh** — aligned with the study guide effective **October 19, 2026** and current Microsoft Fabric docs:
+
+- **Syllabus:** *Configure Dataflow Gen2 workspace settings* → **Configure Apache Airflow workspace settings** (starter vs custom pools); Eventstream/Eventhouse wording updated
+- **Corrected:** V-Order is now **off by default** (`writeHeavy` resource profile); Spark vCores per SKU (1 CU = 2 vCores, 3× burst); idle Spark pools aren't billed; SQL analytics endpoint supports views/functions/procs; Eventstream destinations (no Warehouse); Fabric trigger types; audit log retention (180 days); Fabric Warehouse has no materialized views; OneLake workspace vs tenant settings; `mssparkutils` → `notebookutils`
+- **Updated lists:** shortcut sources, mirroring sources and types, Git providers and items, exam languages, practice assessment link
+- **Added:** resource profiles, custom live pools, variable libraries, OneLake security roles (RLS/CLS/OLS), Copy job, materialized lake views, Dataflow Gen2 performance features, Eventstream SQL operator, workspace monitoring, warehouse data clustering
 
 ---
 
@@ -162,7 +174,7 @@ This site uses [Umami](https://umami.is/) for privacy-friendly analytics.
 
 The [Just the Docs](https://github.com/just-the-docs/just-the-docs) theme is used for a clean, documentation-style layout. Licensed under [MIT](https://opensource.org/license/MIT).
 
-Created with the help of AI. Model used: [Claude Opus 4.6](https://www.anthropic.com/news/claude-opus-4-6). The content has been reviewed and edited by the author for accuracy and clarity, but may contain errors. Always verify against the latest [Microsoft documentation](https://learn.microsoft.com/en-us/fabric/).
+Created with the help of AI. Model used: [Claude Opus 4.6](https://www.anthropic.com/news/claude-opus-4-6); October 2026 refresh: Claude Opus 5.5. The content has been reviewed and edited by the author for accuracy and clarity, but may contain errors. Always verify against the latest [Microsoft documentation](https://learn.microsoft.com/en-us/fabric/).
 
 > *Not affiliated with or endorsed by Microsoft.*
 

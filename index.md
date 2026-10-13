@@ -16,6 +16,9 @@ mermaid: true
 [Start Studying →](/dp-700-study-notes/00-fabric-prerequisites){: .btn .btn-primary .fs-5 .mb-4 .mb-md-0 .mr-2 }
 [View on GitHub](https://github.com/marcogrimaldi29/dp-700-study-notes){: .btn .fs-5 .mb-4 .mb-md-0 target="_blank" }
 
+{: .new-version }
+A redesigned **[DP-700 Study Notes v2](https://marcogrimaldi29.com/dp-700-study-notes-v2/)** is available, with PySpark and KQL deep dives. These v1 notes are still maintained and were reviewed against the study guide effective **October 19, 2026**.
+
 ---
 
 > These notes are maintained by **[Marco Grimaldi](https://www.linkedin.com/in/marco-grimaldi29/)** and based on the **[official Microsoft documentation](https://learn.microsoft.com/en-us/credentials/certifications/fabric-data-engineer-associate/)**.
@@ -35,7 +38,8 @@ mermaid: true
 | ❓ Question Types | MCQ, multi-select, drag-and-drop, case studies |
 | 🔁 Renewal | **Annual** — free online assessment on Microsoft Learn |
 | 🛡️ Prerequisite | **None** *(recommended: experience with Microsoft Fabric)* |
-| 📚 Languages | English, Japanese, Chinese (Simplified), German, French, Spanish, Portuguese (Brazil) |
+| 📚 Languages | English, Japanese, Chinese (Simplified), Chinese (Traditional), German, French, Italian, Korean, Spanish, Portuguese (Brazil) |
+| 📅 Skills outline | **As of October 19, 2026** — domain weights unchanged; *Apache Airflow* workspace settings replaced *Dataflow Gen2* settings (July 2026) |
 
 ---
 
@@ -68,13 +72,13 @@ pie title DP-700 — Official Exam Domain Weights
 
 <div style="border:1px solid #00897b; border-radius:8px; padding:1rem; background:#2d2f31;">
 <h3 style="margin-top:0;">⚙️ Domain 1 — Implement & Manage</h3>
-<p><strong>30–35%</strong> of exam. Workspace settings, deployment pipelines, version control, security, governance, orchestration.</p>
+<p><strong>30–35%</strong> of exam. Spark, OneLake & Apache Airflow settings, deployment pipelines, version control, OneLake security, governance, orchestration.</p>
 <a href="./01-implement-manage-analytics-solution/" class="btn btn-outline fs-5">Read →</a>
 </div>
 
 <div style="border:1px solid #4dd0e1; border-radius:8px; padding:1rem; background:#2d2f31;">
 <h3 style="margin-top:0;">🔄 Domain 2 — Ingest & Transform</h3>
-<p><strong>30–35%</strong> of exam. Loading patterns, batch & streaming ingestion, PySpark, SQL, KQL, shortcuts, mirroring.</p>
+<p><strong>30–35%</strong> of exam. Loading patterns, Copy job, batch & streaming ingestion, PySpark, SQL, KQL, shortcuts, mirroring.</p>
 <a href="./02-ingest-transform-data/" class="btn btn-outline fs-5">Read →</a>
 </div>
 
@@ -112,7 +116,8 @@ flowchart LR
 ### 💡 Study Tips
 
 - 🎯 The exam tests **"which Fabric component?"** — think in trade-offs between Dataflow Gen2, notebooks, pipelines, and KQL
-- 🔒 Know **security layers** — workspace, item, row, column, object, and folder-level access controls
+- 🔒 Know **security layers** — workspace, item, row, column, object, and folder-level access controls, including **OneLake security** roles
+- 🔄 Fabric moves fast — e.g. **V-Order is now off by default** in new workspaces. Watch for "default behaviour" questions
 - 📊 **Streaming vs batch** patterns appear frequently — know when to use Eventstreams vs Spark Structured Streaming vs KQL
 - ⚠️ Each section has **`Exam Caveats`** callouts — these are high-frequency exam traps
 - 🔄 Each domain ends with a **quick-reference scenario table** — great for final review
@@ -125,7 +130,7 @@ flowchart LR
 |----------|------|
 | 🎓 Microsoft Certification Path | [Fabric Data Engineer Associate](https://learn.microsoft.com/en-us/credentials/certifications/fabric-data-engineer-associate/) |
 | 📋 Skills Measured Guide | [Official Study Guide](https://learn.microsoft.com/en-us/credentials/certifications/resources/study-guides/dp-700) |
-| 🧪 Free Practice Assessment | [Practice Test](https://learn.microsoft.com/en-us/credentials/certifications/exams/dp-700/practice/assessment?assessment-type=practice&assessmentId=90) |
+| 🧪 Free Practice Assessment | [Practice Test](https://learn.microsoft.com/en-us/credentials/certifications/fabric-data-engineer-associate/practice/assessment?assessment-type=practice&assessmentId=1704375541&practice-assessment-type=certification) |
 | 📚 Microsoft Fabric Documentation | [Fabric Docs](https://learn.microsoft.com/en-us/fabric/) |
 | 🎬 Exam Readiness Videos | [Exam Readiness Zone](https://learn.microsoft.com/en-us/shows/exam-readiness-zone/) |
 | 💶 EU Exam Booking | [Pearson VUE Microsoft](https://home.pearsonvue.com/microsoft) |
@@ -166,6 +171,6 @@ This site uses [Umami](https://umami.is/) for privacy-friendly analytics.
 
 The [Just the Docs](https://github.com/just-the-docs/just-the-docs) theme is used for a clean, documentation-style layout. Licensed under [MIT](https://opensource.org/license/MIT).
 
-Created with the help of AI. Model used: [Claude Opus 4.6](https://www.anthropic.com/news/claude-opus-4-6). The content has been reviewed and edited by the author for accuracy and clarity, but may contain errors. Always verify against the latest [Microsoft documentation](https://learn.microsoft.com/en-us/fabric/).
+Created with the help of AI. Model used: [Claude Opus 4.6](https://www.anthropic.com/news/claude-opus-4-6); October 2026 refresh: Claude Opus 5.5. The content has been reviewed and edited by the author for accuracy and clarity, but may contain errors. Always verify against the latest [Microsoft documentation](https://learn.microsoft.com/en-us/fabric/).
 
 > *Not affiliated with or endorsed by Microsoft.*

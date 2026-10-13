@@ -52,6 +52,8 @@ search:
 # Navigation
 nav_sort: order
 nav_external_links:
+  - title: "🆕 DP-700 Study Notes v2"
+    url: https://marcogrimaldi29.com/dp-700-study-notes-v2/
   - title: "📘 AZ-305 Study Notes"
     url: https://marcogrimaldi29.com/az-305-study-notes/
   - title: "🥽 AZ-305: Data & Analytics Services — Deep Dive"
@@ -102,6 +104,9 @@ callouts:
   important:
     title: "🔑 Key Point"
     color: purple
+  new-version:
+    title: "🆕 New version available"
+    color: green
 
 # ── Timestamps ────────────────────────────────────────────
 last_edit_timestamp:  true
