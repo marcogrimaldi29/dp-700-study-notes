@@ -21,6 +21,7 @@ mindmap
     2.1 Loading Patterns
       Full Load
       Incremental Load
+      Copy Job
       Dimensional Model Prep
       Streaming Load
     2.2 Batch Data
@@ -29,6 +30,7 @@ mindmap
       OneLake Shortcuts
       Mirroring
       Pipeline Ingestion
+      Materialized Lake Views
       PySpark Transforms
       SQL Transforms
       KQL Transforms
@@ -40,7 +42,7 @@ mindmap
       Streaming Engine Choice
       Native Tables vs Shortcuts
       Query Acceleration
-      Eventstreams
+      Eventstream
       Spark Structured Streaming
       KQL Processing
       Windowing Functions
@@ -77,7 +79,26 @@ flowchart TD
 > **Exam Caveat ⚠️:**
 > - **Watermark/high-water mark** is the simplest incremental pattern — requires a reliable `modified_date` or `version` column in the source
 > - **MERGE** (Delta Lake) is the preferred method for upserts in Fabric Lakehouses
-> - For **CDC from Azure SQL/SQL Server**, use Fabric's **Mirroring** feature
+> - For a **read-only, near real-time replica** of Azure SQL / SQL Server, use **Mirroring**; to land CDC changes into **your own** tables (merge, SCD Type 2), use a **Copy job** with CDC
+
+---
+
+### Copy Job — Built-in Full & Incremental Loads
+
+A **Copy job** moves data from many sources to many destinations **without building a pipeline**, and tracks incremental state for you.
+
+| Capability | Options |
+|-----------|---------|
+| **Copy mode** | **Full copy** (every run) or **Incremental copy** (first run full, then only changes) |
+| **Incremental method** | **Watermark** column (ROWVERSION, datetime, date, integer…) or **CDC** (when enabled on the source — also captures **deletes**) |
+| **Update method** | **Append** (default), **Overwrite**, **Merge** (upsert on key), **SCD Type 2** |
+| **Extras** | Custom source queries, column mapping, auto-create/truncate destination tables, scheduling |
+| **Orchestration** | Runs standalone on a schedule, or inside a pipeline via the **Copy job activity** |
+
+> **Exam Caveat ⚠️:**
+> - A failed incremental run **resumes from the last successful run** — the watermark/CDC state isn't advanced on failure
+> - Watermark-based incremental copy only sees **inserts and updates**; you need **CDC** to replicate **deletes**
+> - Microsoft's guidance: **Copy job** for bronze ingestion, **Mirroring** for read-only replicas, **pipelines** when you need orchestration or metadata-driven copy
 
 ---
 
@@ -101,7 +122,7 @@ graph TD
 | **SCD Type 2** | History | Keep full history with valid_from/valid_to | Add new row, close old row |
 | **SCD Type 3** | Previous value | Keep current + previous value | Add previous_value column |
 
-> **Exam Caveat ⚠️:** SCD Type 2 is the most common exam scenario — know how to implement it with Delta Lake MERGE operations including `valid_from`, `valid_to`, and `is_current` columns.
+> **Exam Caveat ⚠️:** SCD Type 2 is the most common exam scenario — know how to implement it with Delta Lake MERGE operations including `valid_from`, `valid_to`, and `is_current` columns. (A Copy job can also write SCD Type 2 directly when the source has CDC.)
 
 ---
 
@@ -143,6 +164,41 @@ flowchart TD
 | Real-time analytics transforms | **KQL** | Kusto Query Language |
 | SQL-based transforms in Warehouse | **T-SQL** | T-SQL |
 | Simple SQL on Lakehouse tables | **Notebook (`%%sql`)** | Spark SQL |
+| Declarative, auto-refreshing medallion layers in a Lakehouse | **Materialized lake views** | Spark SQL (or PySpark) |
+
+**Dataflow Gen2 performance features** (know which one fits):
+
+| Feature | Use when |
+|---------|----------|
+| **Fast Copy** | High-volume extract-load from a supported source with little or no transformation (copy engine instead of mashup engine) |
+| **Staging** (per query) | Land data first in the staging Lakehouse/Warehouse, then transform — an ELT pattern for heavy joins/aggregations |
+| **Modern Evaluator** | Faster evaluation of non-foldable shaping steps (default in new Dataflow Gen2 with CI/CD) |
+| **Partitioned compute** *(preview)* | Many files / partitioned sources processed in parallel (ADLS Gen2, Folder, Blob) — finishes sooner, not cheaper |
+
+---
+
+### Materialized Lake Views
+
+A **materialized lake view (MLV)** is a Spark SQL (`CREATE MATERIALIZED LAKE VIEW`) or PySpark definition whose result Fabric persists as a Delta table and keeps refreshed.
+
+```sql
+CREATE MATERIALIZED LAKE VIEW silver.clean_orders
+(
+    CONSTRAINT valid_amount CHECK (amount > 0) ON MISMATCH DROP
+)
+AS
+SELECT order_id, customer_id, CAST(order_date AS DATE) AS order_date, amount
+FROM bronze.orders;
+```
+
+| Feature | Detail |
+|---------|--------|
+| **Refresh** | Fabric picks **incremental**, **full**, or **skip** — incremental requires **Delta change data feed** on the sources |
+| **Data quality** | `CONSTRAINT … CHECK … ON MISMATCH DROP` or `FAIL` |
+| **Dependencies** | Lineage across MLVs; refresh runs in dependency order |
+| **File ingestion** | Can read CSV/Parquet files directly from OneLake as a bronze layer |
+
+> **Exam Caveat ⚠️:** MLVs suit SQL-expressible medallion steps. For ML, API calls, or complex Python logic, use notebooks; for sub-second streaming, use Real-Time Intelligence.
 
 ---
 
@@ -157,33 +213,45 @@ flowchart TD
     LH -->|"External shortcut"| S3["☁️ Amazon S3"]
     LH -->|"External shortcut"| GCS["☁️ Google Cloud Storage"]
     LH -->|"External shortcut"| DV["📊 Dataverse"]
+    LH -->|"External shortcut"| MORE["☁️ Blob, S3-compatible,\nOneDrive/SharePoint, Iceberg"]
+    LH -->|"Via data gateway"| ONPREM["🏢 On-premises"]
 ```
 
 | Shortcut Type | Data Copied? | Latency | Security |
 |--------------|-------------|---------|----------|
-| **Internal (OneLake → OneLake)** | No | Low | OneLake permissions |
-| **External (ADLS Gen2, S3, GCS)** | No | Higher (cross-service) | Source + OneLake permissions |
-| **Dataverse** | No | Medium | Dataverse + OneLake permissions |
+| **Internal (OneLake → OneLake)** | No | Low | Calling user's identity + OneLake permissions |
+| **External (ADLS Gen2, Blob, S3, S3-compatible, GCS)** | No | Higher (cross-service) | Connection credential + OneLake permissions |
+| **Dataverse / OneDrive & SharePoint** | No | Medium | Connection credential + OneLake permissions |
+| **On-premises (gateway)** | No | Depends on gateway/network | Gateway connection + OneLake permissions |
+
+**Create and manage shortcuts:**
+
+| Task | Detail |
+|------|--------|
+| **Create** | Requires **Write** on the item holding the shortcut (or OneLake security ReadWrite) **and** Read on the target |
+| **Where** | Under **Tables** (Delta tables → visible to SQL endpoint & Direct Lake) or under **Files** (any format) |
+| **Connections** | External shortcuts bind to a **cloud connection** — you need permission on the connection to reuse it |
+| **Caching** | Workspace OneLake setting; 1–28-day retention, for GCS/S3/S3-compatible/gateway shortcuts |
+| **Transformations** | Shortcut **file transformations** (CSV/Parquet/JSON → synced Delta table) and **AI transformations** for text files |
+| **Automation** | REST API, and **variable libraries** to change shortcut targets per stage |
 
 > **Exam Caveat ⚠️:**
 > - Shortcuts appear as regular folders in the Lakehouse — Spark and SQL can query them transparently
-> - External shortcuts have **higher latency** than native OneLake data — consider this for performance-critical queries
+> - External shortcuts have **higher latency** than native OneLake data — consider caching, or mirroring/copying for performance-critical queries
 > - Shortcut data is **not included** in OPTIMIZE or VACUUM operations — it's managed at the source
+> - Deleting a shortcut removes the **pointer**, not the target data
 
 ---
 
 ### Mirroring
 
-Mirroring creates a **near real-time replica** of data from external sources into OneLake.
+Mirroring makes data from another system available in OneLake, kept up to date in **near real time**, with no ETL pipelines.
 
-| Source | Support | Latency |
-|--------|---------|---------|
-| **Azure SQL Database** | GA | Near real-time |
-| **Azure Cosmos DB** | GA | Near real-time |
-| **Snowflake** | GA | Near real-time |
-| **Azure SQL Managed Instance** | GA | Near real-time |
-| **Azure Database for PostgreSQL** | GA | Near real-time |
-| **Azure Database for MySQL** | GA | Near real-time |
+| Mirroring type | How it works | Sources |
+|---------------|-------------|---------|
+| **Database mirroring** | Continuously **replicates** data into OneLake as Delta tables | Azure SQL Database, Azure SQL Managed Instance, Azure Cosmos DB, Azure Database for PostgreSQL, SQL Server, Snowflake, Google BigQuery, Oracle, SAP, Fabric SQL database *(automatic)*; previews: Azure Database for MySQL, SharePoint List |
+| **Metadata mirroring** | Syncs an external **catalog's metadata** and uses **shortcuts** to the data — nothing copied | Azure Databricks (Unity Catalog), Snowflake; preview: Dremio |
+| **Open mirroring** | Any app/partner **writes change data** into a mirrored database's landing zone using the open Delta-based format | Custom code, partners (e.g., Striim, Oracle GoldenGate, MongoDB, CData) |
 
 ```mermaid
 flowchart LR
@@ -193,9 +261,11 @@ flowchart LR
 ```
 
 > **Exam Caveat ⚠️:**
-> - Mirroring vs Shortcuts: **Mirroring copies data** into OneLake (near real-time CDC), while **shortcuts point to data** without copying
-> - Mirrored data is stored in **Delta format** and can be queried by Spark and SQL
+> - Mirroring vs Shortcuts: **database mirroring copies data** into OneLake (near real-time CDC), while **shortcuts point to data** without copying
+> - Mirrored data is stored in **Delta format**, read-only, and queried through the auto-created **SQL analytics endpoint**, Spark, or Direct Lake
 > - Mirroring is **one-way** — changes in OneLake are NOT pushed back to the source
+> - Core mirroring compute and storage are **free**; optional **extended capabilities** (Delta change data feed, mirroring views) are paid
+> - Source isn't supported? → **Open mirroring** (or a Copy job with CDC)
 
 ---
 
@@ -205,11 +275,21 @@ flowchart LR
 
 | Feature | Description |
 |---------|-------------|
-| **Source connectors** | 90+ connectors (databases, files, SaaS apps) |
-| **Destination** | Lakehouse (Tables or Files), Warehouse, KQL Database |
+| **Source connectors** | 50+ source connectors (databases, files, SaaS apps); on-premises via the **on-premises data gateway**, private networks via the **VNet data gateway** |
+| **Destination** | 40+ destinations, incl. Lakehouse (Tables or Files), Warehouse, KQL Database, SQL database |
 | **Format support** | Parquet, CSV, JSON, ORC, Avro, Delta |
 | **Parallelism** | Configurable degree of copy parallelism |
-| **Staging** | Optional staging via ADLS Gen2 for large copies |
+| **Staging** | Optional staging for large or format-converting copies |
+
+**Other ingestion activities:**
+
+| Activity | Use |
+|----------|-----|
+| **Copy job activity** | Run an existing Copy job (with its incremental/CDC state) as a step in a pipeline |
+| **Lookup + ForEach + Copy** | **Metadata-driven** ingestion — read a control table, copy each listed table with parameters |
+| **Notebook / Dataflow activities** | Ingest with code or Power Query when Copy can't express the logic |
+
+> **Exam Caveat ⚠️:** Watermark-based incremental copy **in a pipeline** means you track the watermark yourself (Lookup old/new watermark → Copy with a filtered query → update the watermark). A **Copy job** manages that state natively.
 
 ---
 
@@ -347,9 +427,9 @@ flowchart TD
 |---------|-------------|---------------------------|-----|
 | **Latency** | Seconds | Seconds–minutes | Seconds |
 | **Coding** | No-code / low-code | PySpark | KQL queries |
-| **Best for** | Event routing, simple transforms | Complex joins, ML on streams | Real-time analytics, alerts |
-| **Destination** | Eventhouse, Lakehouse, custom | Lakehouse (Delta) | KQL Database |
-| **Windowing** | Basic | Full (tumbling, sliding, session) | Full (tumbling, sliding, hopping) |
+| **Best for** | Event routing, no-code or SQL transforms | Complex joins, ML on streams | Real-time analytics, alerts |
+| **Destination** | Eventhouse, Lakehouse, Activator, custom endpoint, derived stream | Lakehouse (Delta) | KQL Database |
+| **Windowing** | Tumbling, hopping, sliding (Group by); + session, snapshot (SQL operator) | Tumbling, sliding, session | `bin()` tumbling; sliding/session via KQL functions |
 
 ---
 
@@ -375,32 +455,47 @@ flowchart TD
 
 ---
 
-### Process Data by Using Eventstreams
+### Process Data by Using Eventstream
 
 ```mermaid
 flowchart LR
-    SRC["📡 Sources\n• Azure Event Hubs\n• Custom App\n• Azure IoT Hub\n• Kafka"] --> ES["⚡ Eventstream\n(Route + Transform)"]
+    SRC["📡 Sources\n• Azure Event Hubs\n• Custom endpoint\n• Azure IoT Hub\n• Kafka\n• Database CDC"] --> ES["⚡ Eventstream\n(Route + Transform)"]
     ES -->|"Destination"| EH["🏠 Eventhouse"]
     ES -->|"Destination"| LH["🏠 Lakehouse"]
-    ES -->|"Destination"| WH["🏢 Warehouse"]
+    ES -->|"Destination"| ACT["🔔 Activator"]
     ES -->|"Destination"| CUSTOM["🔧 Custom Endpoint"]
+    ES -->|"Destination"| DS["🔀 Derived stream"]
 ```
 
 **Eventstream capabilities:**
 
 | Feature | Description |
 |---------|-------------|
-| **No-code transforms** | Filter, manage fields, group by, aggregate |
-| **Multiple destinations** | Route same stream to multiple targets |
-| **Schema registry** | Avro, JSON schema support |
-| **Error handling** | Dead-letter queue for failed events |
+| **No-code transforms** | Filter, Manage fields, Aggregate, Group by (windowed), Union, Expand, Join |
+| **SQL operator** | Write Stream Analytics–style SQL (windowing, aggregations, joins, content-based routing) |
+| **Multiple destinations** | Route the same stream to multiple targets; a **derived stream** publishes the transformed stream to the Real-Time hub |
+| **Eventhouse ingestion modes** | **Direct ingestion** (raw) or **Event processing before ingestion** (transformed) |
+| **Formats** | JSON, CSV, Avro (incl. Confluent Schema Registry); schema-aware Eventstreams *(preview)* |
+
+```sql
+-- Eventstream SQL operator: 1-minute tumbling totals per city
+SELECT System.Timestamp AS WindowEnd, city, SUM(salesAmount) AS TotalSales
+INTO output
+FROM input
+GROUP BY city, TumblingWindow(minute, 1)
+```
+
+> **Exam Caveat ⚠️:**
+> - Eventstream has **no Warehouse destination** — land events in a Lakehouse or Eventhouse, then load the Warehouse
+> - Only **direct ingestion** supports the extra plain-text formats (e.g., TSV, PSV), and only into Eventhouse — Eventstream can't transform them
+> - Eventstream destinations need **Contributor** (or higher) on the destination workspace
 
 ---
 
 ### Process Data by Using Spark Structured Streaming
 
 ```python
-# Read streaming data from Event Hubs via Eventstream
+# Read a bronze Delta table (e.g., landed by an Eventstream Lakehouse destination) as a stream of changes
 df_stream = (spark.readStream
     .format("delta")
     .option("readChangeFeed", "true")
@@ -488,7 +583,12 @@ df_windowed = (df_stream
 
 | Scenario | Requirement | Answer |
 |----------|-------------|--------|
-| Copy data from Azure SQL to Lakehouse | Batch ingestion | **Pipeline Copy Activity** |
+| Copy data from Azure SQL to Lakehouse as a step in an orchestrated workflow | Batch ingestion | **Pipeline Copy Activity** |
+| Incremental / CDC copy into Lakehouse tables with no pipeline to build | Managed incremental state | **Copy job** |
+| Replicate source deletes as well as inserts/updates | Change capture | **Copy job with CDC** (not watermark) |
+| Declarative bronze→silver→gold SQL with data-quality rules | Auto-refreshing medallion | **Materialized lake views** |
+| Eventstream must aggregate with a session window or join two streams | Code-first stream processing | **Eventstream SQL operator** |
+| Mirror a database Fabric doesn't support natively | Custom replication | **Open mirroring** |
 | No-code transform CSV → Lakehouse table | Visual ETL | **Dataflow Gen2** |
 | Complex PySpark join on 100M+ rows | Code-first large-scale | **Notebook** |
 | Access ADLS Gen2 data without copying | Virtual access | **OneLake Shortcut** |

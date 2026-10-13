@@ -24,7 +24,7 @@ Microsoft Fabric is an **end-to-end, unified analytics platform** that brings to
 graph TD
     FABRIC["🏗️ Microsoft Fabric\n(Unified SaaS Analytics Platform)"] --> ONELAKE["🗄️ OneLake\n(Single unified data lake)"]
     FABRIC --> DE["🔧 Data Engineering\nLakehouse, Notebooks, Spark"]
-    FABRIC --> DI["🔄 Data Integration\nPipelines, Dataflow Gen2"]
+    FABRIC --> DI["🔄 Data Factory\nPipelines, Copy job, Dataflow Gen2,\nMirroring, Apache Airflow jobs"]
     FABRIC --> DW["🏢 Data Warehouse\nT-SQL Analytics"]
     FABRIC --> RTI["⚡ Real-Time Intelligence\nEventstreams, Eventhouse, KQL"]
     FABRIC --> DS["🧪 Data Science\nML Models, Experiments"]
@@ -42,7 +42,7 @@ OneLake is Fabric's **single, unified, logical data lake** for the entire organi
 |-----------|--------|
 | Storage format | **Delta Lake** (Parquet + transaction log) |
 | Protocol | **ADLS Gen2-compatible** (abfss://) |
-| Multi-cloud | Supports **OneLake shortcuts** to Azure, AWS S3, GCS |
+| Multi-cloud | Supports **OneLake shortcuts** to Azure, AWS S3 / S3-compatible, GCS, on-premises (via gateway) |
 | Governance | Centralized — one copy of data, one set of permissions |
 | Hierarchy | Tenant → Workspace → Lakehouse/Warehouse → Tables/Files |
 
@@ -74,7 +74,7 @@ flowchart TD
     Start([Data Engineering Need]) -->|"Primarily SQL-based\nT-SQL heavy workloads?"| WH["🏢 Warehouse\n(T-SQL endpoint)"]
     Start -->|"Mixed workloads?\nPySpark + SQL?"| LH["🏠 Lakehouse\n(Spark + SQL endpoint)"]
     Start -->|"Unstructured / semi-structured\ndata exploration?"| LH
-    LH -->|"Need T-SQL access too?"| SQLEP["SQL Analytics Endpoint\n(auto-generated, read-only)"]
+    LH -->|"Need T-SQL access too?"| SQLEP["SQL Analytics Endpoint\n(auto-generated, read-only data)"]
     WH -->|"Need Spark access?"| SHORTCUT2["Create shortcut\nfrom Lakehouse to Warehouse"]
 ```
 
@@ -84,14 +84,15 @@ flowchart TD
 |---------|-----------|-----------|
 | **Storage format** | Delta Lake (Parquet) | Delta Lake (Parquet) |
 | **Primary engine** | Apache Spark (PySpark, Spark SQL) | T-SQL |
-| **SQL access** | SQL Analytics Endpoint (read-only, auto-generated) | Full T-SQL (read/write) |
+| **SQL access** | SQL Analytics Endpoint (auto-generated, **read-only data**) | Full T-SQL (read/write, DDL + DML) |
 | **Schema support** | Schema-on-read + schema-on-write | Schema-on-write |
 | **File support** | Managed tables + unmanaged files (Files/) | Tables only |
-| **Stored procedures** | Not supported | Supported |
-| **Cross-database queries** | Via shortcuts | Native cross-database queries |
+| **Views / functions / stored procedures** | ✅ In the SQL Analytics Endpoint (cannot modify table data) | ✅ Full support |
+| **Cross-database queries** | ✅ From the SQL Analytics Endpoint (same workspace); shortcuts for other workspaces | ✅ Native cross-database queries |
+| **Multi-table transactions** | ❌ | ✅ |
 | **Best for** | Data engineers, data scientists, mixed workloads | SQL analysts, BI workloads, traditional DW |
 
-> **Exam Caveat ⚠️:** The Lakehouse's **SQL Analytics Endpoint** is **read-only** — you cannot INSERT, UPDATE, or DELETE via T-SQL on a Lakehouse. For write operations via T-SQL, use a Warehouse.
+> **Exam Caveat ⚠️:** The Lakehouse's **SQL Analytics Endpoint** is **read-only for data** — you cannot `CREATE TABLE`, INSERT, UPDATE, or DELETE via T-SQL on a Lakehouse (use Spark, or a Warehouse for T-SQL writes). You **can** create views, inline functions, and stored procedures there, and apply SQL object-/row-level security.
 
 ---
 
@@ -101,17 +102,22 @@ flowchart TD
 
 Fabric is licensed via **capacities**, measured in **Capacity Units (CUs)**.
 
-| SKU | CUs | Spark vCores | Typical Use |
-|-----|-----|-------------|-------------|
-| **F2** | 2 | 8 | Dev/test |
-| **F4** | 4 | 16 | Small team |
-| **F8** | 8 | 32 | Small production |
-| **F16** | 16 | 64 | Medium production |
-| **F32** | 32 | 128 | Large production |
-| **F64** | 64 | 256 | Enterprise |
-| **F128+** | 128+ | 512+ | Large enterprise |
+For Spark, **1 CU = 2 Spark vCores**, and capacities can **burst up to 3×** that baseline.
 
-> **Exam Caveat ⚠️:** Fabric uses a **consumption-based model** — different workloads (Spark, SQL, Dataflow Gen2, pipeline) consume CUs at different rates. Spark jobs tend to be the heaviest CU consumers.
+| SKU | CUs | Spark vCores | Max Spark vCores (3× burst) | Typical Use |
+|-----|-----|-------------|----------------------------|-------------|
+| **F2** | 2 | 4 | 20 | Dev/test |
+| **F4** | 4 | 8 | 24 | Small team |
+| **F8** | 8 | 16 | 48 | Small production |
+| **F16** | 16 | 32 | 96 | Medium production |
+| **F32** | 32 | 64 | 192 | Large production |
+| **F64** | 64 | 128 | 384 | Enterprise (≈ Power BI P1) |
+| **F128+** | 128+ | 256+ | 768+ | Large enterprise |
+
+> **Exam Caveat ⚠️:**
+> - Fabric uses a **consumption-based model** — different workloads (Spark, SQL, Dataflow Gen2, pipeline) consume CUs at different rates, and short spikes are **smoothed** over time (sustained overuse leads to **throttling**)
+> - When Spark capacity is exhausted, interactive notebooks fail with **HTTP 430 (TooManyRequestsForCapacity)**; pipeline/scheduled/SJD jobs are **queued** (FIFO, expire after 24 h)
+> - **Autoscale Billing for Spark** (optional) moves Spark jobs off the shared capacity to pay-as-you-go serverless compute
 
 ---
 
@@ -125,17 +131,28 @@ mindmap
       Notebook
       Spark Job Definition
       Environment
-    Data Integration
-      Data Pipeline
+      Materialized Lake View
+    Data Factory
+      Pipeline
+      Copy Job
       Dataflow Gen2
+      Mirrored Database
+      Apache Airflow Job
     Data Warehouse
       Warehouse
       SQL Analytics Endpoint
+    Databases
+      SQL Database
     Real-Time Intelligence
       Eventhouse
       KQL Database
       KQL Queryset
       Eventstream
+      Activator
+      Real-Time Dashboard
+    CI/CD
+      Variable Library
+      Deployment Pipeline
     Data Science
       Experiment
       ML Model
@@ -161,7 +178,7 @@ Delta Lake is the **default storage format** in Microsoft Fabric. It's an open-s
 | **Time Travel** | Query previous versions of data using `VERSION AS OF` or `TIMESTAMP AS OF` |
 | **OPTIMIZE** | Compacts small files into larger ones for better read performance |
 | **VACUUM** | Removes old files no longer referenced by the transaction log |
-| **V-Order** | Fabric-specific optimization — columnar sorting for faster reads |
+| **V-Order** | Fabric-specific write-time optimization of Parquet layout for faster reads (biggest gain for Power BI Direct Lake) |
 | **Z-Order** | Co-locates related data for faster filtering on specific columns |
 
 ### Delta Lake File Structure
@@ -178,7 +195,7 @@ graph TD
 > **Exam Caveat ⚠️:**
 > - **OPTIMIZE** compacts small files but does **not** remove old files — you need **VACUUM** for that
 > - **VACUUM** default retention is **7 days** — running `VACUUM` with a shorter retention can break time travel
-> - **V-Order** is a Fabric-specific optimization that is **enabled by default** in Fabric lakehouses
+> - **V-Order** is **disabled by default in new workspaces** (they use the `writeHeavy` resource profile). Enable it with the `readHeavyForPBI` profile, `spark.sql.parquet.vorder.default=true`, the table property `delta.parquet.vorder.enabled`, or `OPTIMIZE … VORDER`
 
 ---
 
@@ -188,26 +205,29 @@ Shortcuts are **pointers** to data stored in other locations — they allow you 
 
 ### Supported Shortcut Sources
 
-| Source | Protocol | Notes |
-|--------|----------|-------|
-| **Another OneLake location** | Internal | Cross-workspace, cross-lakehouse |
-| **Azure Data Lake Storage Gen2** | abfss:// | External Azure storage |
-| **Amazon S3** | s3:// | Cross-cloud |
-| **Google Cloud Storage** | gs:// | Cross-cloud |
-| **Dataverse** | Dataverse API | Power Platform integration |
+| Type | Sources | Authorization |
+|------|---------|---------------|
+| **Internal (OneLake)** | Lakehouse, Warehouse, KQL database, Mirrored database, Mirrored Azure Databricks catalog, SQL database, Semantic model | **Calling user's identity** — needs permission on the target |
+| **External — Azure** | ADLS Gen2, Azure Blob Storage | Stored **cloud connection** credential |
+| **External — other clouds** | Amazon S3, S3-compatible storage, Google Cloud Storage | Stored cloud connection credential |
+| **External — Microsoft 365 / Power Platform** | Dataverse, OneDrive and SharePoint | Stored connection credential |
+| **External — open table format** | Iceberg tables (surfaced as Delta) | Via the underlying storage shortcut |
+| **On-premises / network-restricted** | Supported storage that isn't publicly reachable (e.g., on-prem S3-compatible) | **On-premises data gateway** |
 
 ```mermaid
 flowchart LR
-    LH["🏠 Lakehouse\n(Fabric)"] -->|Shortcut| ADLS["☁️ ADLS Gen2\n(Azure)"]
-    LH -->|Shortcut| S3["☁️ Amazon S3\n(AWS)"]
+    LH["🏠 Lakehouse\n(Fabric)"] -->|Shortcut| ADLS["☁️ ADLS Gen2 / Blob\n(Azure)"]
+    LH -->|Shortcut| S3["☁️ Amazon S3 /\nS3-compatible"]
     LH -->|Shortcut| GCS["☁️ Google Cloud\n(GCP)"]
-    LH -->|Shortcut| OTHER_LH["🏠 Other Lakehouse\n(Fabric)"]
+    LH -->|Shortcut| OTHER_LH["🏠 Other Lakehouse /\nWarehouse (Fabric)"]
+    LH -->|"Shortcut via gateway"| ONPREM["🏢 On-premises\nstorage"]
 ```
 
 > **Exam Caveat ⚠️:**
-> - Shortcuts provide **read access** to external data — the data is **not copied** into OneLake
+> - Shortcuts are **references** — the data is **not copied** into OneLake, and source changes are visible immediately
 > - Security on shortcut data is governed by **both** the source permissions **and** OneLake permissions
-> - Shortcuts appear as regular folders/tables in the Lakehouse
+> - Shortcuts appear as regular folders/tables in the Lakehouse — create them under **Tables** to make Delta data visible to the SQL analytics endpoint
+> - **Shortcut transformations** can convert files behind a shortcut (CSV, Parquet, JSON…) into a synced Delta table without a pipeline
 
 ---
 
@@ -236,7 +256,8 @@ flowchart LR
 | **Licensing** | Capacity-based (F SKUs) | Per-resource pricing |
 | **Unified experience** | Single portal (app.fabric.microsoft.com) | Multiple portals (portal.azure.com, Synapse Studio) |
 | **Real-time** | Eventstreams + Eventhouse (built-in) | Event Hubs + Stream Analytics (separate services) |
-| **Governance** | Built-in (Purview integration) | Separate Purview deployment |
+| **Triggers** | Schedules (incl. interval) + event triggers via Activator | Schedule, tumbling window, storage/custom event triggers |
+| **Governance** | Built-in (OneLake catalog, Purview integration) | Separate Purview deployment |
 
 ---
 
@@ -249,7 +270,9 @@ flowchart LR
 | Access external ADLS Gen2 without copying | Virtual access | **OneLake Shortcut** |
 | No-code data transformation | Low-code ETL | **Dataflow Gen2** |
 | Real-time event processing and analytics | Streaming + KQL | **Eventstream → Eventhouse** |
-| Orchestrate multi-step data pipelines | Workflow engine | **Data Pipeline** |
+| Orchestrate multi-step data pipelines | Workflow engine | **Pipeline** |
+| Simple bulk / incremental / CDC copy without building a pipeline | Data movement | **Copy job** |
+| Near real-time replica of an operational database | Zero-ETL replication | **Mirroring** |
 | Complex PySpark transformations | Code-first ETL | **Notebook** |
 | Build BI reports on Lakehouse data | Business intelligence | **Semantic Model + Power BI** |
 
