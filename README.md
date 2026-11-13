@@ -149,7 +149,7 @@ The site is continuously updated and based on my personal study notes and experi
 
 ## 🐞 Spotted a Mistake?
 
-Microsoft Fabric ships changes almost weekly, so if something here is wrong or out of date, please [report an issue](https://github.com/marcogrimaldi29/dp-700-study-notes/issues).
+Microsoft Fabric ships changes almost weekly, so if something here is wrong or out of date, please [report an issue](https://github.com/marcogrimaldi29/dp-700-study-notes/issues). The [contributing guide](.github/CONTRIBUTING.md) explains what makes a report easy to fix and what's out of scope.
 
 ---
 
