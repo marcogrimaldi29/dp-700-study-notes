@@ -85,7 +85,7 @@ footer_content: >
 # is set in a page's front matter. Do NOT also call mermaid.initialize()
 # in head_custom.html — that causes a double-init race that breaks diagrams.
 mermaid:
-  version: "10.9.0"
+  version: "10.9.8"
 
 # ── Callout boxes ─────────────────────────────────────────
 callouts_level: quiet
