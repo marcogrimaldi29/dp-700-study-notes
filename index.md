@@ -14,10 +14,11 @@ mermaid: true
 {: .fs-5 .fw-300 }
 
 [Start Studying →](/dp-700-study-notes/00-fabric-prerequisites){: .btn .btn-primary .fs-5 .mb-4 .mb-md-0 .mr-2 }
-[View on GitHub](https://github.com/marcogrimaldi29/dp-700-study-notes){: .btn .fs-5 .mb-4 .mb-md-0 target="_blank" }
+[View on GitHub](https://github.com/marcogrimaldi29/dp-700-study-notes){: .btn .fs-5 .mb-4 .mb-md-0 .mr-2 target="_blank" }
+[🆕 Try v2 →](https://marcogrimaldi29.com/dp-700-study-notes-v2/){: .btn .btn-green .fs-5 .mb-4 .mb-md-0 }
 
 {: .new-version }
-A redesigned **[DP-700 Study Notes v2](https://marcogrimaldi29.com/dp-700-study-notes-v2/)** is available, with PySpark and KQL deep dives. These v1 notes are still maintained and were reviewed against the study guide effective **October 19, 2026**.
+A redesigned **[DP-700 Study Notes v2](https://marcogrimaldi29.com/dp-700-study-notes-v2/)** is available, with PySpark and KQL deep dives. Its source is on **[GitHub](https://github.com/marcogrimaldi29/dp-700-study-notes-v2)**. These v1 notes are still maintained and were reviewed against the study guide effective **October 19, 2026**.
 
 ---
 
@@ -144,6 +145,8 @@ These notes are hosted on **GitHub Pages** and published as a searchable website
 👉 **[📘 DP-700 Study Notes](https://marcogrimaldi29.com/dp-700-study-notes/)**
 
 The site includes full-text search, Mermaid diagram rendering, and mobile-friendly navigation for on-the-go review.
+
+🆕 A redesigned **[DP-700 Study Notes v2](https://marcogrimaldi29.com/dp-700-study-notes-v2/)** is also available, with its source in its own **[GitHub repo](https://github.com/marcogrimaldi29/dp-700-study-notes-v2)**.
 
 These notes are designed to be a structured, exam-focused summary of the most important concepts and services based on the official **[Microsoft DP-700 Study Guide](https://learn.microsoft.com/en-us/credentials/certifications/resources/study-guides/dp-700)** and its criteria.
 

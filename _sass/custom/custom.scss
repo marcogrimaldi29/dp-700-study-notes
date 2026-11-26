@@ -70,6 +70,7 @@ body .aux-nav-list-item a                  { color: #4dd0e1; }
 // Rendered by _includes/footer_custom.html. The footer sits inside
 // .main-content, so these rules come after Section 4 and match or beat its
 // link specificity. Same pairing as the support callout on marcogrimaldi29.com.
+body .v2-note,
 body .star-cta,
 body .issue-note {
   border-radius: 0.5rem;
@@ -81,8 +82,11 @@ body .issue-note {
 
 body .star-cta   { background: rgba(244, 180, 0, 0.08); border: 1px solid rgba(244, 180, 0, 0.35); }
 body .issue-note { background: rgba(77, 208, 225, 0.07); border: 1px solid rgba(77, 208, 225, 0.35); margin-bottom: 1rem; }
+// Green tint to match the `new-version` callout on the home page.
+body .v2-note    { background: rgba(16, 172, 125, 0.08); border: 1px solid rgba(16, 172, 125, 0.45); }
 body .star-cta p { margin: 0 0 0.75rem; }
-body .issue-note a { font-weight: 600; }
+body .issue-note a,
+body .v2-note a  { font-weight: 600; }
 
 // Buttons grow to fill their row, so however they wrap the rows end flush.
 body .support-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
