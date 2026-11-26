@@ -99,6 +99,20 @@
     border-radius: 4px;
   }
 
+  /* Fences Rouge has no lexer for (```kql) and ```mermaid fences
+     come out as a bare <pre><code class="language-…">, without the
+     theme's scrolling .highlight wrapper. Scroll long lines inside
+     the block instead of widening the page on phones, and drop the
+     inline-code padding that indents the first line and makes each
+     Mermaid diagram 0.8em wider than its box. */
+  .main-content pre {
+    overflow-x: auto;
+  }
+
+  .main-content pre > code[class*="language-"] {
+    padding: 0;
+  }
+
   /* ── SLA badges ─────────────────────────────────────── */
   /* Bold SLA percentages stand out in tables */
   /* --repo-accent defined per-repo in _sass/custom/custom.scss */
