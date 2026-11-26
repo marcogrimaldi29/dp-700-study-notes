@@ -3,6 +3,10 @@
   site.footer_content. That paragraph is kept at the end, below the support
   callout and the report-an-issue banner.
 {%- endcomment -%}
+{%- comment -%} The home page has its own v2 callout, so skip the banner there. {%- endcomment -%}
+{%- unless page.url == "/" -%}
+<div class="v2-note">🆕 <strong>New version available:</strong> a redesigned <a href="https://marcogrimaldi29.com/dp-700-study-notes-v2/">DP-700 Study Notes v2</a> is live, with its source on <a href="https://github.com/marcogrimaldi29/dp-700-study-notes-v2">GitHub</a>.</div>
+{%- endunless -%}
 <div class="star-cta">
   <p>⭐ <strong>Found these notes helpful?</strong> Starring the repo on GitHub helps other DP-700 candidates find them, or connect with me on LinkedIn.</p>
   <div class="support-actions">
